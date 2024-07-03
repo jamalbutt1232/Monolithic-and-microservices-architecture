@@ -1,23 +1,39 @@
 const express = require("express");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const proxy = require("express-http-proxy");
 const dotenv = require("dotenv");
 
 dotenv.config();
 
 const app = express();
 
+app.use((req, res, next) => {
+  console.log(`Request URL: ${req.url}, Method: ${req.method}`);
+  next();
+});
+
 app.use(
   "/users",
-  createProxyMiddleware({
-    target: `http://localhost:${process.env.USER_SERVICE_PORT}`,
-    changeOrigin: true,
+  proxy("http://localhost:3001", {
+    proxyReqPathResolver: (req) => {
+      return `/users${req.url}`;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      console.log(`Response from User Service: ${proxyRes.statusCode}`);
+      return proxyResData;
+    },
   })
 );
+
 app.use(
   "/todos",
-  createProxyMiddleware({
-    target: `http://localhost:${process.env.TODO_SERVICE_PORT}`,
-    changeOrigin: true,
+  proxy("http://localhost:3002", {
+    proxyReqPathResolver: (req) => {
+      return `/todos${req.url}`;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      console.log(`Response from To-Do Service: ${proxyRes.statusCode}`);
+      return proxyResData;
+    },
   })
 );
 

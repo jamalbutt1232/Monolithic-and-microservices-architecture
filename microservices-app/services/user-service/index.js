@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const connectDB = require("./database");
 const User = require("./models/user");
 
 dotenv.config();
@@ -9,18 +9,7 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("User Service MongoDB connected");
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
+connectDB();
 
 // User Registration
 app.post("/register", async (req, res) => {

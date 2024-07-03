@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const connectDB = require("./database");
 const ToDo = require("./models/todo");
 
 dotenv.config();
@@ -9,25 +10,13 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("To-Do Service MongoDB connected");
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
+connectDB();
 
-// Create To-Do
 app.post("/todos", async (req, res) => {
   try {
     const todo = new ToDo({
       task: req.body.task,
-      userId: req.body.userId,
+      userId: new mongoose.Types.ObjectId(req.body.userId),
     });
     await todo.save();
     res.status(201).json(todo);
@@ -36,17 +25,17 @@ app.post("/todos", async (req, res) => {
   }
 });
 
-// Get To-Dos
 app.get("/todos", async (req, res) => {
   try {
-    const todos = await ToDo.find({ userId: req.query.userId });
+    const todos = await ToDo.find({
+      userId: new mongoose.Types.ObjectId(req.query.userId),
+    });
     res.status(200).json(todos);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// Update To-Do
 app.put("/todos/:id", async (req, res) => {
   try {
     const todo = await ToDo.findById(req.params.id);
@@ -62,7 +51,6 @@ app.put("/todos/:id", async (req, res) => {
   }
 });
 
-// Delete To-Do
 app.delete("/todos/:id", async (req, res) => {
   try {
     const todo = await ToDo.findById(req.params.id);
